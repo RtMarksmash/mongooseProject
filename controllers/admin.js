@@ -13,11 +13,13 @@ exports.postAddProduct = (req, res, next) => {
     const imageUrl = req.body.imageUrl;
     const price = req.body.price;
     const description = req.body.description;
+    const userId = req.user
     const product = new Product({
         title: title,
         price: price,
         description: description,
         imageUrl: imageUrl,
+        userId: userId
     });
     product
         .save()
@@ -88,7 +90,7 @@ exports.getProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.deleteById(prodId)
+    Product.findByIdAndRemove(prodId)
         .then(() => {
             console.log('DESTROYED PRODUCT');
             res.redirect('/admin/products');

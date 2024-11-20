@@ -1,4 +1,6 @@
 const path = require('path');
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -7,12 +9,15 @@ const config = require('./config');
 const dotenv = require('dotenv').config();
 
 const errorController = require('./controllers/error');
-//const User = require('./models/user');
+const User = require('./models/user');
 
 const app = express();
 
 const user_db = process.env.DB_USER;
 const password_db = process.env.DB_PASSWORD;
+console.log(user_db)
+
+const url = `mongodb+srv://${user_db}:${password_db}@cluster0.z9aglvc.mongodb.net/shop?retryWrites=true&w=majority&appName=Cluster0`
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -23,14 +28,14 @@ const shopRoutes = require('./routes/shop');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-/* app.use((req, res, next) => {
-    User.findById('5baa2528563f16379fc8a610')
+app.use((req, res, next) => {
+    User.findById('67380f7f5614843fd652d913')
         .then(user => {
-            req.user = new User(user.name, user.email, user.cart, user._id);
+            req.user = user;
             next();
         })
         .catch(err => console.log(err));
-}); */
+});
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
@@ -39,9 +44,21 @@ app.use(errorController.get404);
 
 mongoose
     .connect(
-        `mongodb+srv://${user_db}:${password_db}@cluster0.z9aglvc.mongodb.net/shop?retryWrites=true&w=majority&appName=Cluster0`
+        url
     )
     .then(result => {
+        User.findOne().then(user => {
+            if (!user) {
+                const user = new User({
+                    name: 'mario',
+                    email: 'mario@mora.com',
+                    cart: {
+                        items: []
+                    }
+                })
+                user.save();
+            }
+        });
         app.listen(config.port, () => {
             console.log(config.message)
         });
